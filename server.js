@@ -21,6 +21,7 @@ app.use(bodyParser.json())
 /*=====================================================
 Create books Collection
 =======================================================*/
+
 const isbns = [9780156012195, 9780743273565, 9780435905484, 9780140275360, 9780756404741, 9780756407919, 9780140177398, 9780316769488, 9780062225672, 9780143130154, 9780307455925, 9781501143519]
 
 const url = "https://www.googleapis.com/books/v1/volumes?q=isbn:"
@@ -58,22 +59,14 @@ isbns.forEach((i) => {
   for subsequent runs, re-comment it so that it runs only once!
   that said, there is a fail-safe to avoid duplicates below
   =======================================================*/
-  loadFromAPI(apiURL)
+  //loadFromAPI(apiURL)
 });
 
 
 /*=====================================================
 Create People Collection
 =======================================================*/
-let personSchema = new Schema({
-  hair: String,
-  eyes: String,
-  weight: Number,
-  height: Number,
-  salary: Number,
-  numKids: Number,
-  kids: Number
-});
+
 const colors = ["brown", "black", "red", "yellow", "green", "grey"];
 
 const getColor = () => {
@@ -115,9 +108,11 @@ adds new people and their kids until you do have 100
 try to understand how this code works
 could you write it differently?
 =======================================================*/
+
 Person.find({}).count((err, count) => {
   // the below two loops could be changed to a simple:
   // for (var i = count; i < 100; i++) {}
+  if (err) throw err;
   if (count < 100) {
     for (let i = 0; i < 100 - count; i++) {
       let numKids = getNumKids();
@@ -153,20 +148,69 @@ and your server is running do the following:
 /*Books
 ----------------------*/
 //1. Find books with fewer than 500 but more than 200 pages
-
+//db.books.aggregate([{$match: {pages: {$gt: 200, $lt: 500}}}]);
+// Book.find(({pages: {"$lt":500, "$gt":200}}), (err, book) => {
+//   if (err) {
+//     console.log(err)
+//   }
+//   console.log(book)
+// });
 //2. Find books whose rating is less than 5, and sort by the author's name
-
+//db.books.aggregate([{$match: {rating: {$lt: 5}}}, {$sort: {author: 1}}])
+// Book.find({rating:{"$lt":5}}).sort({author: 1}).exec((err, book) => {
+//   console.log(book);
+// });
 //3. Find all the Fiction books, skip the first 2, and display only 3 of them
-
+//db.books.aggregate([{$match: {genres: 'Fiction}}, {$sort: {title: 1}}, {$skip: 2}, {$limit: 3}])
+// Book.find({genres: 'Fiction'}).sort({title: 1}).skip(2).limit(3).exec((err, book) => {
+//   console.log(book);
+//})
 
 /*People
 ----------------------*/
 //1. Find all the people who are tall (>180) AND rich (>30000)
-
+// Person.find((	
+  //{ height:{"$gt":180},
+//   salary:{"$gt":30000}	}),
+//     (err, people) => {
+//       console.log(people);
+// });
 //2. Find all the people who are tall (>180) OR rich (>30000)
-
+// Person.find( 
+  //{ $or:[
+    // {height:{"$gt":180}},
+//      {salary:{"$gt":30000}}]},
+//     (err,people) => {
+//       console.log(people)
+// });
 //3. Find all the people who have grey hair or eyes, and who's weight (<70)
-
+// Person.find({ 
+//   $or:[
+//     {hair: 'grey'}, 
+//     {eyes: 'grey'}
+//   ],
+//   weight: {'$gt': 70}},
+// (err, people) => {
+//   console.log(people);
+// })
 //4. Find people who have at least 1 kid with grey hair
+// Person.find({kids:{$elemMatch:{hair:"grey"}}}).exec((err,people) => {
+//   //this is just to show you that this works
+//     for (p in people) {
+//       let person = people[p];
+//       console.log("Person", p,"has kids:\n",person.kids);
+//     }
+//   });
 
 //5. Find all the people who have at least one kid who's weight is >100 and themselves' weight is >100
+    Person.find().and([
+      {weight: {"$gt":100}},
+      {kids:{$elemMatch:{weight: {"$gt":100}}}}
+    ]).exec((err, people) => {
+      //this is just to show you that this works
+      for (p in people) {
+        let person = people[p];
+        console.log("\nPerson", p,"has weight", person.weight," and kids:\n",person.kids);
+      }
+  });
+  
